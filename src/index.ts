@@ -1,15 +1,16 @@
-import express from "express";
+import { Hono } from "hono";
+import { serve } from "@hono/node-server";
 import { chromium } from "playwright";
 import { submitServiceRequest } from "./problem.ts";
 
 const browser = await chromium.launch({ headless: false });
 
-const app = express();
-app.use(express.json());
+const app = new Hono();
 
 process.on("SIGTERM", async () => {
   console.log("Shutting down...");
   if (browser) await browser.close();
+  process.exit(0);
 });
 
 process.on("SIGINT", async () => {
@@ -18,8 +19,8 @@ process.on("SIGINT", async () => {
   process.exit(0);
 });
 
-app.post("/problem", async (req, res) => {
-  // const { imagePath } = req.body;
+app.post("/problem", async (c) => {
+  // const { imagePath } = await c.req.json();
 
   const context = await browser.newContext();
   const page = await context.newPage();
@@ -39,7 +40,7 @@ app.post("/problem", async (req, res) => {
 
   console.log("Service request submitted:", srNumber);
 
-  res.json({
+  return c.json({
     success: true,
     serviceRequestNumber: srNumber,
     submittedAt: new Date().toISOString(),
@@ -48,7 +49,10 @@ app.post("/problem", async (req, res) => {
 
 const PORT = process.env.PORT || 4000;
 
-app.listen(PORT, "0.0.0.0", () => {
-  console.log(`Server running on port ${PORT}`);
-  console.log(`Submit endpoint: POST http://localhost:${PORT}/problem`);
+console.log(`Server running on port ${PORT}`);
+console.log(`Submit endpoint: POST http://localhost:${PORT}/problem`);
+
+serve({
+  fetch: app.fetch,
+  port: Number(PORT),
 });
