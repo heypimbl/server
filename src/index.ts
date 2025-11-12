@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import { serve } from "@hono/node-server";
 import { chromium } from "playwright";
+import { reverseGeocode } from "./geocode.ts";
 import { submitServiceRequest } from "./problem.ts";
 import fs from "fs";
 import path from "path";
@@ -25,6 +26,13 @@ app.post("/problem", async (c) => {
   // TODO validate request body
   const body = (await c.req.parseBody()) as unknown as ProblemRequest;
 
+  console.log(body);
+
+  let address = body.address;
+  if (address == null) {
+    address = await reverseGeocode(body.latitude, body.longitude);
+  }
+
   // TODO UUIDv7 PIMBL id?
   const requestDatetime = Date.now();
 
@@ -48,7 +56,7 @@ app.post("/problem", async (c) => {
     problemDetail: body.problemDetail || "Blocked Bike Lane",
     observedDatetime: new Date(body.timestamp),
     description: body.description || "Vehicle parked in bike lane",
-    address: body.address || "382 Bridge St",
+    address,
     imagePaths,
   };
 
