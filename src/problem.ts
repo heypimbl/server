@@ -52,7 +52,7 @@ export async function submitServiceRequest(page: Page, req: ProblemRequest): Pro
   for (const path of req.imagePaths) {
     await page.getByRole("button", { name: "Add Attachment" }).click();
     await page.locator('input[type="file"]').last().setInputFiles(path);
-    await page.getByRole("button", { name: "Add Attachment" }).click();
+    await page.locator(".modal-dialog").getByRole("button", { name: "Add Attachment" }).click();
   }
 
   await page.getByRole("button", { name: "Next" }).click();
@@ -60,6 +60,7 @@ export async function submitServiceRequest(page: Page, req: ProblemRequest): Pro
   // Page 2 - Where
   await page.locator("#SelectAddressWhere").click();
 
+  page.waitForTimeout(200);  // helps with autocomplete
   await page.locator("#address-search-box-input").fill(req.address);
   await page.locator(".ui-autocomplete .ui-menu-item-wrapper").first().click();
   await page.getByRole("button", { name: "Select Address" }).click();
