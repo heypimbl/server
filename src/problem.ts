@@ -1,4 +1,3 @@
-import { chromium } from "playwright";
 import type { Page } from "playwright";
 
 export interface ProblemRequest {
@@ -6,7 +5,7 @@ export interface ProblemRequest {
   observedDatetime: Date;
   description: string;
   address: string;
-  imagePath?: string;
+  imagePaths: string[];
 }
 
 const ILLEGAL_PARKING_LANDING_URL = "https://portal.311.nyc.gov/article/?kanumber=KA-01986";
@@ -36,21 +35,24 @@ export async function login(page: Page, email: string, password: string): Promis
   await page.locator("#next").click();
 }
 
-export async function submitServiceRequest(page: Page, problem: ProblemRequest): Promise<string> {
+export async function submitServiceRequest(page: Page, req: ProblemRequest): Promise<string> {
   await page.goto(ILLEGAL_PARKING_LANDING_URL);
+
+  if (req.imagePaths.length > 3) throw new Error("At most 3 images may be submitted");
 
   await page.getByRole("button", { name: "Report Illegally Parked Vehicles" }).click();
   // <a> not considered a link because it has no href.
   await page.getByText("Report illegal parking.").first().click();
 
   // Page 1 - What
-  await page.locator("#n311_problemdetailid_select").selectOption({ label: problem.problemDetail });
-  await page.getByLabel("Date/Time Observed").fill(formatDateTime(problem.observedDatetime));
-  await page.getByLabel("Describe the Problem").fill(problem.description);
+  await page.locator("#n311_problemdetailid_select").selectOption({ label: req.problemDetail });
+  await page.getByLabel("Date/Time Observed").fill(formatDateTime(req.observedDatetime));
+  await page.getByLabel("Describe the Problem").fill(req.description);
 
-  if (problem.imagePath) {
+  for (const path of req.imagePaths) {
     await page.getByRole("button", { name: "Add Attachment" }).click();
-    await page.locator('input[type="file"]').setInputFiles(problem.imagePath);
+    await page.locator('input[type="file"]').last().setInputFiles(path);
+    await page.getByRole("button", { name: "Add Attachment" }).click();
   }
 
   await page.getByRole("button", { name: "Next" }).click();
@@ -58,7 +60,7 @@ export async function submitServiceRequest(page: Page, problem: ProblemRequest):
   // Page 2 - Where
   await page.locator("#SelectAddressWhere").click();
 
-  await page.locator("#address-search-box-input").fill(problem.address);
+  await page.locator("#address-search-box-input").fill(req.address);
   await page.locator(".ui-autocomplete .ui-menu-item-wrapper").first().click();
   await page.getByRole("button", { name: "Select Address" }).click();
 
@@ -69,34 +71,12 @@ export async function submitServiceRequest(page: Page, problem: ProblemRequest):
 
   // Page 4 - Review
   await page.frameLocator("[title='reCAPTCHA']").locator(".recaptcha-checkbox").first().click();
-  // TODO uncomment
-  // await page.getByRole("button", { name: "Complete and Submit" }).click();
 
-  const srNumber = await page.locator("#n311_name").getAttribute("value");
-
-  return srNumber || "";
+  if (process.env.PIMBL_NO_SUBMIT ?? "" !== "") {
+    return "dummy-service-request-number";
+  } else {
+    await page.getByRole("button", { name: "Complete and Submit" }).click();
+    const srNumber = await page.locator("#n311_name").getAttribute("value");
+    return srNumber || "";
+  }
 }
-
-async function main() {
-  const browser = await chromium.launch({ headless: false });
-  const context = await browser.newContext();
-  const page = await context.newPage();
-
-  // await login(page, "your-email@example.com", "your-password");
-
-  const problem: ProblemRequest = {
-    problemDetail: "Parking Permit Improper Use",
-    observedDatetime: new Date("2025-11-03T11:51:00-0500"),
-    description: "Parked in no standing zone",
-    address: "382 Bridge St",
-  };
-
-  const srNumber = await submitServiceRequest(page, problem);
-  console.log("Service request submitted:", srNumber);
-
-  await page.close();
-  await context.close();
-  await browser.close();
-}
-
-// main().catch(console.error);
