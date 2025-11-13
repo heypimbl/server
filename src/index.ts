@@ -33,6 +33,7 @@ app.post("/problem", async (c) => {
   let address = body.address;
   if (address == null) {
     address = await reverseGeocode(body.latitude, body.longitude);
+    console.info(`Reverse geocode: (${body.latitude},${body.longitude}) -> ${address}`);
   }
 
   // TODO UUIDv7 PIMBL id?
