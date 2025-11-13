@@ -1,4 +1,6 @@
 import type { Page } from "playwright";
+import { expect } from "playwright/test";
+import options from "./options.ts";
 
 export interface ProblemRequest {
   problemDetail: string;
@@ -60,9 +62,18 @@ export async function submitServiceRequest(page: Page, req: ProblemRequest): Pro
   // Page 2 - Where
   await page.locator("#SelectAddressWhere").click();
 
-  page.waitForTimeout(200);  // helps with autocomplete
-  await page.locator("#address-search-box-input").fill(req.address);
-  await page.locator(".ui-autocomplete .ui-menu-item-wrapper").first().click();
+  // Autocomplete is inconsistent (non-deterministic?) so retry a few times.
+  for (let i = 0; i < 5; i++) {
+    await page.locator("#address-search-box-input").fill(req.address);
+    const timeout = 50 * Math.pow(2, i);
+    try {
+      await page.locator(".ui-autocomplete .ui-menu-item-wrapper").first().click({ timeout });
+    } catch {
+      continue;
+    }
+    break;
+  }
+
   await page.getByRole("button", { name: "Select Address" }).click();
 
   await page.getByRole("button", { name: "Next" }).click();
@@ -71,13 +82,17 @@ export async function submitServiceRequest(page: Page, req: ProblemRequest): Pro
   await page.getByRole("button", { name: "Next" }).click();
 
   // Page 4 - Review
-  await page.frameLocator("[title='reCAPTCHA']").locator(".recaptcha-checkbox").first().click();
+  const captchaFrame = page.frameLocator("[title='reCAPTCHA']");
+  await captchaFrame.locator(".recaptcha-checkbox").first().click();
+  // TODO handle captcha
+  await expect(captchaFrame.getByRole("checkbox", { name: "I'm not a robot" })).toBeChecked();
 
-  if (process.env.PIMBL_NO_SUBMIT ?? "" !== "") {
+  if (options.noSubmit) {
     return "dummy-service-request-number";
   } else {
     await page.getByRole("button", { name: "Complete and Submit" }).click();
-    const srNumber = await page.locator("#n311_name").getAttribute("value");
-    return srNumber || "";
+
+    // Submission confirmation page
+    return await page.getByLabel("SR Number").inputValue();
   }
 }

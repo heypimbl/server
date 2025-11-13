@@ -1,10 +1,11 @@
+import options from "./options.ts";
+
 const API_BASE = "https://geocode.maps.co/reverse";
 
-const api_key = process.env.MAPSCO_API_KEY;
-if (!api_key) throw new Error("MAPSCO_API_KEY not defined");
-
 export async function reverseGeocode(lat: number, lon: number) {
-  const url = `${API_BASE}?lat=${lat}&lon=${lon}&api_key=${api_key}`;
+  if (!options.mapscoApiKey) throw new Error("PIMBL_MAPSCO_API_KEY not defined");
+
+  const url = `${API_BASE}?lat=${lat}&lon=${lon}&api_key=${options.mapscoApiKey}`;
 
   const response = await fetch(url);
   if (!response.ok) throw new Error(`geocode.maps.co API error: ${response.status}`);

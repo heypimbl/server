@@ -3,6 +3,7 @@ import { serve } from "@hono/node-server";
 import { chromium } from "playwright";
 import { reverseGeocode } from "./geocode.ts";
 import { submitServiceRequest } from "./problem.ts";
+import options from "./options.ts";
 import fs from "fs";
 import path from "path";
 
@@ -26,7 +27,8 @@ app.post("/problem", async (c) => {
   // TODO validate request body
   const body = (await c.req.parseBody()) as unknown as ProblemRequest;
 
-  console.log(body);
+  const { "image[]": images, ...bodyExceptImages } = body;
+  console.info("POST /problem", JSON.stringify({ ...bodyExceptImages, imageCount: images.length }));
 
   let address = body.address;
   if (address == null) {
@@ -36,9 +38,8 @@ app.post("/problem", async (c) => {
   // TODO UUIDv7 PIMBL id?
   const requestDatetime = Date.now();
 
-  const imageFiles = body["image[]"].slice(0, 3);
   const imagePaths = await Promise.all(
-    imageFiles.map(async (file, i) => {
+    images.slice(0, 3).map(async (file, i) => {
       const filename = `${requestDatetime}-${i}-${file.name}`;
       const filepath = path.join(UPLOAD_DIR, filename);
 
@@ -61,11 +62,12 @@ app.post("/problem", async (c) => {
   };
 
   const srNumber = await submitServiceRequest(page, problem);
+  console.info("SR Number", srNumber);
 
-  await page.close();
-  await context.close();
-
-  console.log("Service request submitted:", srNumber);
+  if (!options.linger) {
+    await page.close();
+    await context.close();
+  }
 
   return c.json({
     success: true,
@@ -75,6 +77,6 @@ app.post("/problem", async (c) => {
   });
 });
 
-serve({ fetch: app.fetch, port: Number(process.env.PORT || 4000) }, (info) => {
-  console.log(`Server running on ${info.address}:${info.port}`);
+serve({ fetch: app.fetch, port: options.port }, (info) => {
+  console.log(`Server running on http://localhost:${info.port}`);
 });
