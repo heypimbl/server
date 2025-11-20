@@ -135,11 +135,11 @@ export async function submitServiceRequest(page: Page, req: ProblemRequest): Pro
   }, captchaToken);
   console.log("Token injection complete");
 
-  // Wait 1 minute to allow the token to be processed
+  // Wait 5 minutes to allow the token to be processed
   // This is for debugging purposes
-  console.log("Waiting 5 minutes for token processing...");
-  await new Promise((resolve) => setTimeout(resolve, 300000));
-  console.log("Wait complete");
+  // console.log("Waiting 5 minutes for token processing...");
+  // await new Promise((resolve) => setTimeout(resolve, 300000));
+  // console.log("Wait complete");
 
   if (options.noSubmit) {
     return "dummy-service-request-number";

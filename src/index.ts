@@ -7,7 +7,7 @@ import options from "./options.ts";
 import fs from "fs";
 import path from "path";
 
-const browser = await chromium.launch({ headless: false });
+const browser = await chromium.launch({ headless: true });
 
 const app = new Hono();
 
