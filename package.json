@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "PIMBL_NO_SUBMIT=1 tsx watch src/index.ts",
+    "dev": "PIMBL_NO_SUBMIT=1 npx tsx watch src/index.ts",
     "test": "PIMBL_NO_SUBMIT=1 npx tsx --test src/*.test.ts"
   },
   "dependencies": {

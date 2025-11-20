@@ -1,6 +1,7 @@
 import type { Page } from "playwright";
 import { expect } from "playwright/test";
 import options from "./options.ts";
+import { solveCaptcha } from "./captcha.ts";
 
 export interface ProblemRequest {
   problemDetail: string;
@@ -82,10 +83,63 @@ export async function submitServiceRequest(page: Page, req: ProblemRequest): Pro
   await page.getByRole("button", { name: "Next" }).click();
 
   // Page 4 - Review
-  const captchaFrame = page.frameLocator("[title='reCAPTCHA']");
-  await captchaFrame.locator(".recaptcha-checkbox").first().click();
-  // TODO handle captcha
-  await expect(captchaFrame.getByRole("checkbox", { name: "I'm not a robot" })).toBeChecked();
+  // Extract reCAPTCHA site key from the page
+  const siteKey = await page.locator("[data-sitekey]").first().getAttribute("data-sitekey");
+  if (!siteKey) {
+    throw new Error("Could not find reCAPTCHA site key on page");
+  }
+
+  if (!options.twoCaptchaApiKey) {
+    throw new Error("PIMBL_2CAPTCHA_API_KEY environment variable is not set");
+  }
+
+  // Solve captcha using 2captcha
+  console.log("Solving reCAPTCHA using 2captcha...");
+  const captchaToken = await solveCaptcha(siteKey, page.url(), options.twoCaptchaApiKey);
+  console.log("reCAPTCHA solved successfully");
+
+  // Wait for the g-recaptcha-response field to be created by the widget
+  console.log("Waiting for g-recaptcha-response field to be created...");
+  await page.waitForFunction(() => {
+    return document.querySelector('textarea[name="g-recaptcha-response"]') !== null;
+  }, { timeout: 5000 });
+  console.log("g-recaptcha-response field found");
+
+  // Inject the token and trigger the callback
+  console.log("Injecting token into g-recaptcha-response...");
+  await page.evaluate((token) => {
+    // Set the token in the textarea
+    const field = document.querySelector('textarea[name="g-recaptcha-response"]') as HTMLTextAreaElement;
+    if (field) {
+      field.value = token;
+      field.dispatchEvent(new Event('change', { bubbles: true }));
+      field.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+
+    // Find and trigger the reCAPTCHA callback if it exists
+    // The callback is typically registered with the widget
+    if ((window as any).___grecaptcha_cfg?.callbacks) {
+      const callbacks = (window as any).___grecaptcha_cfg.callbacks;
+      for (const key in callbacks) {
+        if (callbacks[key] && typeof callbacks[key] === 'function') {
+          try {
+            callbacks[key](token);
+            console.log("Callback triggered successfully");
+            return;
+          } catch (e) {
+            // Continue to next callback if this one fails
+          }
+        }
+      }
+    }
+  }, captchaToken);
+  console.log("Token injection complete");
+
+  // Wait 1 minute to allow the token to be processed
+  // This is for debugging purposes
+  console.log("Waiting 5 minutes for token processing...");
+  await new Promise((resolve) => setTimeout(resolve, 300000));
+  console.log("Wait complete");
 
   if (options.noSubmit) {
     return "dummy-service-request-number";
