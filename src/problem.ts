@@ -72,6 +72,8 @@ export async function submitServiceRequest(page: Page, req: ProblemRequest): Pro
     } catch {
       continue;
     }
+    // We seem to click Select Address before it's enabled without this sleep?
+    await new Promise((resolve) => setTimeout(resolve, 100));
     break;
   }
 
