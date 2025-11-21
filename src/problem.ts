@@ -39,6 +39,7 @@ export async function login(page: Page, email: string, password: string): Promis
 }
 
 export async function submitServiceRequest(page: Page, req: ProblemRequest): Promise<string> {
+  console.log("Visiting landing page:", ILLEGAL_PARKING_LANDING_URL);
   await page.goto(ILLEGAL_PARKING_LANDING_URL);
 
   if (req.imagePaths.length > 3) throw new Error("At most 3 images may be submitted");
@@ -46,6 +47,7 @@ export async function submitServiceRequest(page: Page, req: ProblemRequest): Pro
   await page.getByRole("button", { name: "Report Illegally Parked Vehicles" }).click();
   // <a> not considered a link because it has no href.
   await page.getByText("Report illegal parking.").first().click();
+  console.log("Page 1 - What: Filling out problem details");
 
   // Page 1 - What
   await page.locator("#n311_problemdetailid_select").selectOption({ label: req.problemDetail });
@@ -58,9 +60,18 @@ export async function submitServiceRequest(page: Page, req: ProblemRequest): Pro
     await page.locator(".modal-dialog").getByRole("button", { name: "Add Attachment" }).click();
   }
 
+  await page.waitForLoadState("networkidle");
+  // Wait for the Next button to be enabled
+  console.log("Waiting for Next button to be enabled...");
+  await page.locator("#NextButton").waitFor({ state: "enabled", timeout: 10000 }).catch(() => {});
+  console.log("Page 1 complete, clicking Next...");
   await page.getByRole("button", { name: "Next" }).click();
+  console.log("Page 2 - Where: Selecting address");
 
   // Page 2 - Where
+  // Wait for map to fully load - Esri/ArcGIS map on this page can intercept clicks
+  await page.waitForLoadState("networkidle");
+  await page.waitForSelector('[class*="esri-view-surface"]', { timeout: 10000 }).catch(() => {});
   await page.locator("#SelectAddressWhere").click();
 
   // Autocomplete is inconsistent (non-deterministic?) so retry a few times.
@@ -77,12 +88,19 @@ export async function submitServiceRequest(page: Page, req: ProblemRequest): Pro
     break;
   }
 
+  console.log("Clicking Select Address button...");
   await page.getByRole("button", { name: "Select Address" }).click();
 
+  await page.waitForLoadState("networkidle");
+  console.log("Page 2 complete, clicking Next...");
   await page.getByRole("button", { name: "Next" }).click();
+  console.log("Page 3 - Who: Skipping details");
 
   // Page 3 - Who
+  await page.waitForLoadState("networkidle");
+  console.log("Page 3 complete, clicking Next...");
   await page.getByRole("button", { name: "Next" }).click();
+  console.log("Page 4 - Review: Solving captcha and submitting");
 
   // Page 4 - Review
   // Extract reCAPTCHA site key from the page
@@ -140,11 +158,16 @@ export async function submitServiceRequest(page: Page, req: ProblemRequest): Pro
   // console.log("Wait complete");
 
   if (options.noSubmit) {
+    console.log("noSubmit option enabled, returning dummy SR number");
     return "dummy-service-request-number";
   } else {
+    console.log("Clicking Complete and Submit button...");
     await page.getByRole("button", { name: "Complete and Submit" }).click();
 
     // Submission confirmation page
-    return await page.getByLabel("SR Number").inputValue();
+    console.log("Extracting SR Number from confirmation page...");
+    const srNumber = await page.getByLabel("SR Number").inputValue();
+    console.log("Service request submitted successfully:", srNumber);
+    return srNumber;
   }
 }
