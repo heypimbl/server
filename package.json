@@ -3,8 +3,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "PIMBL_NO_SUBMIT=1 npx tsx watch src/index.ts",
-    "test": "PIMBL_NO_SUBMIT=1 npx tsx --test src/*.test.ts"
+    "dev": "PIMBL_NO_SUBMIT=1 tsx watch src/index.ts",
+    "test": "PIMBL_NO_SUBMIT=1 vitest run"
   },
   "dependencies": {
     "@hono/node-server": "^1.19.6",
@@ -15,6 +15,7 @@
   "devDependencies": {
     "prettier": "^3.6.2",
     "tsx": "^4.20.6",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.12"
   }
 }
