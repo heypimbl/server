@@ -77,14 +77,22 @@ export async function submitServiceRequest(page: Page, req: ProblemRequest): Pro
   // Autocomplete is inconsistent (non-deterministic?) so retry a few times.
   for (let i = 0; i < 5; i++) {
     await page.locator("#address-search-box-input").fill(req.address);
+
     const timeout = 50 * Math.pow(2, i);
     try {
       await page.locator(".ui-autocomplete .ui-menu-item-wrapper").first().click({ timeout });
     } catch {
+      console.log(`Retry #${i + 1}`);
+      // The search input becomes disabled (and unfillable) when an address has
+      // been selected. Not sure how we get into this state, but let's just
+      // assume an address has been selected and move on.
+      if (await page.locator("#address-search-box-input").isDisabled()) break;
       continue;
     }
+
     // We seem to click Select Address before it's enabled without this sleep?
     await new Promise((resolve) => setTimeout(resolve, 100));
+
     break;
   }
 
