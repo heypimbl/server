@@ -60,7 +60,7 @@ export async function submitServiceRequest(page: Page, req: ProblemRequest): Pro
     await page.locator(".modal-dialog").getByRole("button", { name: "Add Attachment" }).click();
   }
 
-  await page.waitForLoadState("networkidle");
+  await page.waitForLoadState("domcontentloaded");
   // Wait for the Next button to be enabled
   console.log("Waiting for Next button to be enabled...");
   await page.locator("#NextButton").waitFor({ state: "enabled", timeout: 10000 }).catch(() => {});
@@ -70,7 +70,7 @@ export async function submitServiceRequest(page: Page, req: ProblemRequest): Pro
 
   // Page 2 - Where
   // Wait for map to fully load - Esri/ArcGIS map on this page can intercept clicks
-  await page.waitForLoadState("networkidle");
+  await page.waitForLoadState("domcontentloaded");
   await page.waitForSelector('[class*="esri-view-surface"]', { timeout: 10000 }).catch(() => {});
   await page.locator("#SelectAddressWhere").click();
 
@@ -91,13 +91,13 @@ export async function submitServiceRequest(page: Page, req: ProblemRequest): Pro
   console.log("Clicking Select Address button...");
   await page.getByRole("button", { name: "Select Address" }).click();
 
-  await page.waitForLoadState("networkidle");
+  await page.waitForLoadState("domcontentloaded");
   console.log("Page 2 complete, clicking Next...");
   await page.getByRole("button", { name: "Next" }).click();
   console.log("Page 3 - Who: Skipping details");
 
   // Page 3 - Who
-  await page.waitForLoadState("networkidle");
+  await page.waitForLoadState("domcontentloaded");
   console.log("Page 3 complete, clicking Next...");
   await page.getByRole("button", { name: "Next" }).click();
   console.log("Page 4 - Review: Solving captcha and submitting");
