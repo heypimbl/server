@@ -91,10 +91,6 @@ export async function submitServiceRequest(page: Page, req: ProblemRequest): Pro
     throw new Error("Could not find reCAPTCHA site key on page");
   }
 
-  if (!options.twoCaptchaApiKey) {
-    throw new Error("PIMBL_2CAPTCHA_API_KEY environment variable is not set");
-  }
-
   // Solve captcha using 2captcha
   console.log("Solving reCAPTCHA using 2captcha...");
   const captchaToken = await solveCaptcha(siteKey, page.url(), options.twoCaptchaApiKey);
