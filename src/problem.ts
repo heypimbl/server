@@ -78,7 +78,7 @@ export async function submitServiceRequest(page: Page, req: ProblemRequest): Pro
   for (let i = 0; i < 5; i++) {
     await page.locator("#address-search-box-input").fill(req.address);
 
-    const timeout = 50 * Math.pow(2, i);
+    const timeout = 100 * Math.pow(2, i);
     try {
       await page.locator(".ui-autocomplete .ui-menu-item-wrapper").first().click({ timeout });
     } catch {
@@ -100,6 +100,9 @@ export async function submitServiceRequest(page: Page, req: ProblemRequest): Pro
   await page.getByRole("button", { name: "Select Address" }).click();
 
   await page.waitForLoadState("domcontentloaded");
+
+  console.log("Page 2 complete, waiting a few seconds to render before clicking Next...");
+     await new Promise((resolve) => setTimeout(resolve, 10000));
   console.log("Page 2 complete, clicking Next...");
   await page.getByRole("button", { name: "Next" }).click();
   console.log("Page 3 - Who: Skipping details");
