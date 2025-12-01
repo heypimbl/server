@@ -1,4 +1,4 @@
-import options from "./options.ts";
+import options from "./options";
 
 export const reverseGeocode = options.mapscoApiKey ? reverseGeocodeMapsco : reverseGeocodeGeoNames;
 

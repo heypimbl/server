@@ -1,7 +1,7 @@
 import type { Page } from "playwright";
 import { expect } from "playwright/test";
-import options from "./options.ts";
-import { solveCaptcha } from "./captcha.ts";
+import options from "./options";
+import { solveCaptcha } from "./captcha";
 
 export interface ProblemRequest {
   problemDetail: string;

@@ -3,8 +3,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "PIMBL_NO_SUBMIT=1 tsx watch src/index.ts",
-    "test": "PIMBL_NO_SUBMIT=1 vitest run"
+    "dev": "PIMBL_2CAPTCHA_API_KEY='blah' PIMBL_NO_SUBMIT=1 tsx watch src/index.ts",
+    "test": "PIMBL_2CAPTCHA_API_KEY='blah' PIMBL_NO_SUBMIT=1 vitest run"
   },
   "dependencies": {
     "@hono/node-server": "^1.19.6",

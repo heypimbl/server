@@ -1,9 +1,9 @@
 import { Hono } from "hono";
 import { serve } from "@hono/node-server";
 import { chromium } from "playwright";
-import { reverseGeocode } from "./geocode.ts";
-import { submitServiceRequest } from "./problem.ts";
-import options from "./options.ts";
+import { reverseGeocode } from "./geocode";
+import { submitServiceRequest } from "./problem";
+import options from "./options";
 import fs from "fs";
 import path from "path";
 

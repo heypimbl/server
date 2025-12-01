@@ -4,7 +4,6 @@
     "module": "preserve",
     "strict": true,
 
-    "allowImportingTsExtensions": true,
     "erasableSyntaxOnly": true,
     "noEmit": true,
     "noUncheckedIndexedAccess": true,
