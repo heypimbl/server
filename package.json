@@ -3,6 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "build": "tsc",
     "dev": "PIMBL_2CAPTCHA_API_KEY='blah' PIMBL_NO_SUBMIT=1 tsx watch src/index.ts",
     "test": "PIMBL_2CAPTCHA_API_KEY='blah' PIMBL_NO_SUBMIT=1 vitest run"
   },

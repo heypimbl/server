@@ -1,11 +1,11 @@
 {
   "compilerOptions": {
     "target": "ES2023",
-    "module": "preserve",
+    "module": "Node20",
+    "outDir": "build",
     "strict": true,
 
     "erasableSyntaxOnly": true,
-    "noEmit": true,
     "noUncheckedIndexedAccess": true,
     "verbatimModuleSyntax": true
   },

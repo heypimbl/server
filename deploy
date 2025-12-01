@@ -1,0 +1,19 @@
+#!/bin/bash -x
+
+rm -r build
+npm run build
+
+cp -R node_modules build/
+cp package.json build/
+
+cat > build/serve <<\EOF
+#!/bin/bash
+. "$CREDENTIALS_DIRECTORY/secrets"
+cd "$(dirname "$0")"
+exec node index.js
+EOF
+chmod +x build/serve
+
+rsync -r --del build/ popfresh.mou.fo:/opt/pimbl/app/
+
+ssh popfresh.mou.fo sudo systemctl restart pimbl.service
