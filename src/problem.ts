@@ -62,8 +62,8 @@ export async function submitServiceRequest(page: Page, req: ProblemRequest): Pro
 
   await page.waitForLoadState("domcontentloaded");
   // Wait for the Next button to be enabled
-  console.log("Waiting for Next button to be enabled...");
-  await page.locator("#NextButton").waitFor({ state: "enabled", timeout: 10000 }).catch(() => {});
+  // console.log("Waiting for Next button to be enabled...");
+  // await page.locator("#NextButton").waitFor({ state: "enabled", timeout: 10000 }).catch(() => {});
   console.log("Page 1 complete, clicking Next...");
   await page.getByRole("button", { name: "Next" }).click();
   console.log("Page 2 - Where: Selecting address");
