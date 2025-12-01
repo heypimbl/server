@@ -1,7 +1,7 @@
 import { test } from "vitest";
 import { strict as assert } from "node:assert";
 import { chromium } from "playwright";
-import { submitServiceRequest, type ProblemRequest } from "./problem";
+import { submitServiceRequest, type ProblemRequest } from "./problem.js";
 
 test(
   "submitServiceRequest submits illegal parking complaint",
