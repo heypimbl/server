@@ -11,8 +11,6 @@ const browser = await chromium.launch({ headless: true });
 
 const app = new Hono();
 
-const UPLOAD_DIR = "./state";
-
 interface ProblemRequest {
   timestamp: string;
   latitude: number;
@@ -42,7 +40,7 @@ app.post("/problem", async (c) => {
   const imagePaths = await Promise.all(
     images.slice(0, 3).map(async (file, i) => {
       const filename = `${requestDatetime}-${i}-${file.name}`;
-      const filepath = path.join(UPLOAD_DIR, filename);
+      const filepath = path.join(options.stateDir, filename);
 
       const arrayBuffer = await file.arrayBuffer();
       await fs.promises.writeFile(filepath, Buffer.from(arrayBuffer));
