@@ -78,6 +78,34 @@ app.post("/problem", async (c) => {
   });
 });
 
-serve({ fetch: app.fetch, port: options.port }, (info) => {
+const server = serve({ fetch: app.fetch, port: options.port }, (info) => {
   console.log(`Server running on http://localhost:${info.port}`);
 });
+
+const shutdown = async () => {
+  console.log("\nShutting down gracefully...");
+
+  // Set a timeout to force kill if shutdown takes too long
+  const forceKillTimeout = setTimeout(() => {
+    console.error("Shutdown timeout - forcing exit");
+    process.exit(1);
+  }, 10000);
+
+  try {
+    await browser.close();
+    await new Promise<void>((resolve) => {
+      server.close(() => {
+        resolve();
+      });
+    });
+    clearTimeout(forceKillTimeout);
+    process.exit(0);
+  } catch (error) {
+    console.error("Error during shutdown:", error);
+    clearTimeout(forceKillTimeout);
+    process.exit(1);
+  }
+};
+
+process.on("SIGINT", shutdown);
+process.on("SIGTERM", shutdown);
