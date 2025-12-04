@@ -7,7 +7,10 @@ import options from "./options.js";
 import fs from "fs";
 import path from "path";
 
-const browser = await chromium.launch({ headless: true });
+const browser = await chromium.launch({
+  channel: "chromium",
+  executablePath: options.chromiumPath,
+});
 
 const app = new Hono();
 

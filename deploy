@@ -16,6 +16,6 @@ exec node index.js
 EOF
 chmod +x build/serve
 
-rsync -rl --del build/ popfresh.mou.fo:/opt/pimbl/app/
+rsync -rlp --chmod=Dg+s,ug+rw,o-w,+X --del build/ pimbl.mou.fo:/opt/pimbl/app/
 
-ssh popfresh.mou.fo sudo systemctl restart pimbl.service
+ssh pimbl.mou.fo sudo systemctl restart pimbl.service
