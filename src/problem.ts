@@ -75,13 +75,16 @@ export async function submitServiceRequest(page: Page, req: ProblemRequest): Pro
   await page.locator("#SelectAddressWhere").click();
 
   // Autocomplete is inconsistent (non-deterministic?) so retry a few times.
-  for (let i = 0; i < 5; i++) {
-    await page.locator("#address-search-box-input").fill(req.address);
+  for (let i = 0; i < 4; i++) {
+    await page.waitForLoadState("domcontentloaded");
+    await page.waitForSelector('[class*="esri-view-surface"]', { timeout: 10000 }).catch(() => {});
+    await page.locator("#address-search-box-input").pressSequentially(req.address, { delay: 100 });
 
-    const timeout = 100 * Math.pow(2, i);
+    const timeout = 500 * Math.pow(2, i);
     try {
       await page.locator(".ui-autocomplete .ui-menu-item-wrapper").first().click({ timeout });
-    } catch {
+    } catch (e) {
+      console.log(e);
       console.log(`Retry #${i + 1}`);
       // The search input becomes disabled (and unfillable) when an address has
       // been selected. Not sure how we get into this state, but let's just
