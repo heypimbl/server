@@ -9,5 +9,4 @@ export default {
   mapscoApiKey: process.env.PIMBL_MAPSCO_API_KEY,
   twoCaptchaApiKey: process.env.PIMBL_2CAPTCHA_API_KEY || die("PIMBL_2CAPTCHA_API_KEY not set"),
   noSubmit: !!process.env.PIMBL_NO_SUBMIT,
-  linger: !!process.env.PIMBL_LINGER,
 };

@@ -90,10 +90,9 @@ app.post("/problem", async (c) => {
       const srNumber = await submitServiceRequest(page, problem, logWithId);
       logWithId("SR Number", srNumber);
 
-      if (!options.linger) {
-        await page.close();
-        await context.close();
-      }
+      await page.close();
+      await context.close();
+
     } catch (error) {
       logWithId("Error processing request:", error);
     }
