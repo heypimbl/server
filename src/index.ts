@@ -24,6 +24,10 @@ interface ProblemRequest {
   address?: string;
 }
 
+app.get("/ping", async (c) => {
+  return c.text("Hello world", 200);
+})
+
 app.post("/problem", async (c) => {
   // TODO validate request body
   const body = (await c.req.parseBody()) as unknown as ProblemRequest;
