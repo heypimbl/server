@@ -123,6 +123,11 @@ export async function submitServiceRequest(page: Page, req: ProblemRequest, logW
     throw new Error("Could not find reCAPTCHA site key on page");
   }
 
+  if (options.noSubmit) {
+    logWithId("noSubmit option enabled, returning dummy SR number");
+    return "dummy-service-request-number";
+  }
+
   // Solve captcha using 2captcha
   logWithId("Solving reCAPTCHA using 2captcha...");
   const captchaToken = await solveCaptcha(siteKey, page.url(), options.twoCaptchaApiKey);
@@ -165,23 +170,12 @@ export async function submitServiceRequest(page: Page, req: ProblemRequest, logW
   }, captchaToken);
   logWithId("Token injection complete");
 
-  // Wait 5 minutes to allow the token to be processed
-  // This is for debugging purposes
-  // logWithId("Waiting 5 minutes for token processing...");
-  // await new Promise((resolve) => setTimeout(resolve, 300000));
-  // logWithId("Wait complete");
+  logWithId("Clicking Complete and Submit button...");
+  await page.getByRole("button", { name: "Complete and Submit" }).click();
 
-  if (options.noSubmit) {
-    logWithId("noSubmit option enabled, returning dummy SR number");
-    return "dummy-service-request-number";
-  } else {
-    logWithId("Clicking Complete and Submit button...");
-    await page.getByRole("button", { name: "Complete and Submit" }).click();
-
-    // Submission confirmation page
-    logWithId("Extracting SR Number from confirmation page...");
-    const srNumber = await page.getByLabel("SR Number").inputValue();
-    logWithId("Service request submitted successfully:", srNumber);
-    return srNumber;
-  }
+  // Submission confirmation page
+  logWithId("Extracting SR Number from confirmation page...");
+  const srNumber = await page.getByLabel("SR Number").inputValue();
+  logWithId("Service request submitted successfully:", srNumber);
+  return srNumber;
 }
