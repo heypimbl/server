@@ -6,6 +6,7 @@ import { submitServiceRequest } from "./problem.js";
 import options from "./options.js";
 import fs from "fs";
 import path from "path";
+import crypto from "crypto";
 
 const browser = await chromium.launch({
   channel: "chromium",
@@ -32,13 +33,29 @@ app.post("/problem", async (c) => {
   // TODO validate request body
   const body = (await c.req.parseBody()) as unknown as ProblemRequest;
 
+  // Generate unique identifier from request body and submission time
+  const identifierData = {
+    timestamp: body.timestamp,
+    latitude: body.latitude,
+    longitude: body.longitude
+  };
+  const uniqueIdentifier = crypto
+    .createHash("sha256")
+    .update(JSON.stringify(identifierData))
+    .digest("hex")
+    .substring(0, 16);
+
+  function logWithId(message: any, ...optionalParams: any[]): void {
+    console.info("[" + uniqueIdentifier + "]", message, ...optionalParams);
+  }
+
   const { "image[]": images, ...bodyExceptImages } = body;
-  console.info("POST /problem", JSON.stringify({ ...bodyExceptImages, imageCount: images.length }));
+  logWithId("POST /problem", JSON.stringify({ ...bodyExceptImages, imageCount: images.length }));
 
   let address = body.address;
   if (address == null) {
     address = await reverseGeocode(body.latitude, body.longitude);
-    console.info(`Reverse geocode: (${body.latitude},${body.longitude}) -> ${address}`);
+    logWithId(`Reverse geocode: (${body.latitude},${body.longitude}) -> ${address}`);
   }
 
   // TODO UUIDv7 PIMBL id?
@@ -67,8 +84,8 @@ app.post("/problem", async (c) => {
     imagePaths,
   };
 
-  const srNumber = await submitServiceRequest(page, problem);
-  console.info("SR Number", srNumber);
+  const srNumber = await submitServiceRequest(page, problem, logWithId);
+  logWithId("SR Number", srNumber);
 
   if (!options.linger) {
     await page.close();

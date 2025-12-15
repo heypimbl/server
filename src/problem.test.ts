@@ -18,7 +18,10 @@ test(
       imagePaths: [],
     };
 
-    const srNumber = await submitServiceRequest(page, problem);
+    function logWithIdTesting(message: any, ...optionalParams: any[]): void {
+      console.info("[" + "TESTING" + "]", message, ...optionalParams);
+    }
+    const srNumber = await submitServiceRequest(page, problem, logWithIdTesting);
 
     console.log("Service request submitted:", srNumber);
 

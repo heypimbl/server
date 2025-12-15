@@ -38,8 +38,8 @@ export async function login(page: Page, email: string, password: string): Promis
   await page.locator("#next").click();
 }
 
-export async function submitServiceRequest(page: Page, req: ProblemRequest): Promise<string> {
-  console.log("Visiting landing page:", ILLEGAL_PARKING_LANDING_URL);
+export async function submitServiceRequest(page: Page, req: ProblemRequest, logWithId: any): Promise<string> {
+  logWithId("Visiting landing page:", ILLEGAL_PARKING_LANDING_URL);
   await page.goto(ILLEGAL_PARKING_LANDING_URL);
 
   if (req.imagePaths.length > 3) throw new Error("At most 3 images may be submitted");
@@ -47,7 +47,7 @@ export async function submitServiceRequest(page: Page, req: ProblemRequest): Pro
   await page.getByRole("button", { name: "Report Illegally Parked Vehicles" }).click();
   // <a> not considered a link because it has no href.
   await page.getByText("Report illegal parking.").first().click();
-  console.log("Page 1 - What: Filling out problem details");
+  logWithId("Page 1 - What: Filling out problem details");
 
   // Page 1 - What
   await page.locator("#n311_problemdetailid_select").selectOption({ label: req.problemDetail });
@@ -62,11 +62,11 @@ export async function submitServiceRequest(page: Page, req: ProblemRequest): Pro
 
   await page.waitForLoadState("domcontentloaded");
   // Wait for the Next button to be enabled
-  // console.log("Waiting for Next button to be enabled...");
+  // logWithId("Waiting for Next button to be enabled...");
   // await page.locator("#NextButton").waitFor({ state: "enabled", timeout: 10000 }).catch(() => {});
-  console.log("Page 1 complete, clicking Next...");
+  logWithId("Page 1 complete, clicking Next...");
   await page.getByRole("button", { name: "Next" }).click();
-  console.log("Page 2 - Where: Selecting address");
+  logWithId("Page 2 - Where: Selecting address");
 
   // Page 2 - Where
   // Wait for map to fully load - Esri/ArcGIS map on this page can intercept clicks
@@ -84,8 +84,8 @@ export async function submitServiceRequest(page: Page, req: ProblemRequest): Pro
     try {
       await page.locator(".ui-autocomplete .ui-menu-item-wrapper").first().click({ timeout });
     } catch (e) {
-      console.log(e);
-      console.log(`Retry #${i + 1}`);
+      logWithId(e);
+      logWithId(`Retry #${i + 1}`);
       // The search input becomes disabled (and unfillable) when an address has
       // been selected. Not sure how we get into this state, but let's just
       // assume an address has been selected and move on.
@@ -99,22 +99,22 @@ export async function submitServiceRequest(page: Page, req: ProblemRequest): Pro
     break;
   }
 
-  console.log("Clicking Select Address button...");
+  logWithId("Clicking Select Address button...");
   await page.getByRole("button", { name: "Select Address" }).click();
 
   await page.waitForLoadState("domcontentloaded");
 
-  console.log("Page 2 complete, waiting a few seconds to render before clicking Next...");
+  logWithId("Page 2 complete, waiting a few seconds to render before clicking Next...");
      await new Promise((resolve) => setTimeout(resolve, 10000));
-  console.log("Page 2 complete, clicking Next...");
+  logWithId("Page 2 complete, clicking Next...");
   await page.getByRole("button", { name: "Next" }).click();
-  console.log("Page 3 - Who: Skipping details");
+  logWithId("Page 3 - Who: Skipping details");
 
   // Page 3 - Who
   await page.waitForLoadState("domcontentloaded");
-  console.log("Page 3 complete, clicking Next...");
+  logWithId("Page 3 complete, clicking Next...");
   await page.getByRole("button", { name: "Next" }).click();
-  console.log("Page 4 - Review: Solving captcha and submitting");
+  logWithId("Page 4 - Review: Solving captcha and submitting");
 
   // Page 4 - Review
   // Extract reCAPTCHA site key from the page
@@ -124,19 +124,19 @@ export async function submitServiceRequest(page: Page, req: ProblemRequest): Pro
   }
 
   // Solve captcha using 2captcha
-  console.log("Solving reCAPTCHA using 2captcha...");
+  logWithId("Solving reCAPTCHA using 2captcha...");
   const captchaToken = await solveCaptcha(siteKey, page.url(), options.twoCaptchaApiKey);
-  console.log("reCAPTCHA solved successfully");
+  logWithId("reCAPTCHA solved successfully");
 
   // Wait for the g-recaptcha-response field to be created by the widget
-  console.log("Waiting for g-recaptcha-response field to be created...");
+  logWithId("Waiting for g-recaptcha-response field to be created...");
   await page.waitForFunction(() => {
     return document.querySelector('textarea[name="g-recaptcha-response"]') !== null;
   }, { timeout: 5000 });
-  console.log("g-recaptcha-response field found");
+  logWithId("g-recaptcha-response field found");
 
   // Inject the token and trigger the callback
-  console.log("Injecting token into g-recaptcha-response...");
+  logWithId("Injecting token into g-recaptcha-response...");
   await page.evaluate((token) => {
     // Set the token in the textarea
     const field = document.querySelector('textarea[name="g-recaptcha-response"]') as HTMLTextAreaElement;
@@ -154,7 +154,7 @@ export async function submitServiceRequest(page: Page, req: ProblemRequest): Pro
         if (callbacks[key] && typeof callbacks[key] === 'function') {
           try {
             callbacks[key](token);
-            console.log("Callback triggered successfully");
+            logWithId("Callback triggered successfully");
             return;
           } catch (e) {
             // Continue to next callback if this one fails
@@ -163,25 +163,25 @@ export async function submitServiceRequest(page: Page, req: ProblemRequest): Pro
       }
     }
   }, captchaToken);
-  console.log("Token injection complete");
+  logWithId("Token injection complete");
 
   // Wait 5 minutes to allow the token to be processed
   // This is for debugging purposes
-  // console.log("Waiting 5 minutes for token processing...");
+  // logWithId("Waiting 5 minutes for token processing...");
   // await new Promise((resolve) => setTimeout(resolve, 300000));
-  // console.log("Wait complete");
+  // logWithId("Wait complete");
 
   if (options.noSubmit) {
-    console.log("noSubmit option enabled, returning dummy SR number");
+    logWithId("noSubmit option enabled, returning dummy SR number");
     return "dummy-service-request-number";
   } else {
-    console.log("Clicking Complete and Submit button...");
+    logWithId("Clicking Complete and Submit button...");
     await page.getByRole("button", { name: "Complete and Submit" }).click();
 
     // Submission confirmation page
-    console.log("Extracting SR Number from confirmation page...");
+    logWithId("Extracting SR Number from confirmation page...");
     const srNumber = await page.getByLabel("SR Number").inputValue();
-    console.log("Service request submitted successfully:", srNumber);
+    logWithId("Service request submitted successfully:", srNumber);
     return srNumber;
   }
 }
