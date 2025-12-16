@@ -78,7 +78,10 @@ export async function submitServiceRequest(page: Page, req: ProblemRequest, logW
   for (let i = 0; i < 4; i++) {
     await page.waitForLoadState("domcontentloaded");
     await page.waitForSelector('[class*="esri-view-surface"]', { timeout: 10000 }).catch(() => {});
-    await page.locator("#address-search-box-input").pressSequentially(req.address, { delay: 100 });
+
+    // sleep for a few seconds
+    await new Promise((resolve) => setTimeout(resolve, 3000));
+    await page.locator("#address-search-box-input").pressSequentially(req.address, { delay: 100, timeout: 60000});
 
     const timeout = 500 * Math.pow(2, i);
     try {
@@ -94,13 +97,13 @@ export async function submitServiceRequest(page: Page, req: ProblemRequest, logW
     }
 
     // We seem to click Select Address before it's enabled without this sleep?
-    await new Promise((resolve) => setTimeout(resolve, 100));
+    await new Promise((resolve) => setTimeout(resolve, 1000));
 
     break;
   }
 
   logWithId("Clicking Select Address button...");
-  await page.getByRole("button", { name: "Select Address" }).click();
+  await page.getByRole("button", { name: "Select Address" }).click({ timeout: 60000 });
 
   await page.waitForLoadState("domcontentloaded");
 
@@ -115,6 +118,9 @@ export async function submitServiceRequest(page: Page, req: ProblemRequest, logW
   logWithId("Page 3 complete, clicking Next...");
   await page.getByRole("button", { name: "Next" }).click();
   logWithId("Page 4 - Review: Solving captcha and submitting");
+
+  // log the URL of the page we are currently on.
+  logWithId("Current page URL:", page.url())
 
   // Page 4 - Review
   // Extract reCAPTCHA site key from the page
