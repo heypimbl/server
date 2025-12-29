@@ -29,6 +29,48 @@ app.get("/ping", async (c) => {
   return c.text("Hello world", 200);
 })
 
+async function reportProblem(body: ProblemRequest, logWithId: any) {
+  let address = body.address;
+  if (address == null) {
+    address = await reverseGeocode(body.latitude, body.longitude);
+    logWithId(`Reverse geocode: (${body.latitude},${body.longitude}) -> ${address}`);
+  }
+
+  // TODO UUIDv7 PIMBL id?
+  const requestDatetime = Date.now();
+
+  const imagePaths = await Promise.all(
+    body["image[]"].slice(0, 3).map(async (file, i) => {
+      const filename = `${requestDatetime}-${i}-${file.name}`;
+      const filepath = path.join(options.stateDir, filename);
+
+      const arrayBuffer = await file.arrayBuffer();
+      await fs.promises.writeFile(filepath, Buffer.from(arrayBuffer));
+
+      return filepath;
+    }),
+  );
+
+  const problem = {
+    problemDetail: body.problemDetail || "Blocked Bike Lane",
+    observedDatetime: new Date(body.timestamp),
+    description: body.description || "Vehicle parked in bike lane",
+    address,
+    imagePaths,
+  };
+
+  const context = await browser.newContext();
+  const page = await context.newPage();
+  try {
+    const srNumber = await submitServiceRequest(page, problem, logWithId);
+    logWithId("SR Number", srNumber);
+    return srNumber;
+  } finally {
+    await page.close();
+    await context.close();
+  }
+}
+
 app.post("/problem", async (c) => {
   // TODO validate request body
   const body = (await c.req.parseBody()) as unknown as ProblemRequest;
@@ -53,50 +95,7 @@ app.post("/problem", async (c) => {
   logWithId("POST /problem", JSON.stringify({ ...bodyExceptImages, imageCount: images.length }));
 
   // Continue processing in the background without blocking the response
-  (async () => {
-    try {
-      let address = body.address;
-      if (address == null) {
-        address = await reverseGeocode(body.latitude, body.longitude);
-        logWithId(`Reverse geocode: (${body.latitude},${body.longitude}) -> ${address}`);
-      }
-
-      // TODO UUIDv7 PIMBL id?
-      const requestDatetime = Date.now();
-
-      const imagePaths = await Promise.all(
-        images.slice(0, 3).map(async (file, i) => {
-          const filename = `${requestDatetime}-${i}-${file.name}`;
-          const filepath = path.join(options.stateDir, filename);
-
-          const arrayBuffer = await file.arrayBuffer();
-          await fs.promises.writeFile(filepath, Buffer.from(arrayBuffer));
-
-          return filepath;
-        }),
-      );
-
-      const context = await browser.newContext();
-      const page = await context.newPage();
-
-      const problem = {
-        problemDetail: body.problemDetail || "Blocked Bike Lane",
-        observedDatetime: new Date(body.timestamp),
-        description: body.description || "Vehicle parked in bike lane",
-        address,
-        imagePaths,
-      };
-
-      const srNumber = await submitServiceRequest(page, problem, logWithId);
-      logWithId("SR Number", srNumber);
-
-      await page.close();
-      await context.close();
-
-    } catch (error) {
-      logWithId("Error processing request:", error);
-    }
-  })();
+  reportProblem(body, logWithId);
 
   // Return immediately
   return c.json({
