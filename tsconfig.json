@@ -2,7 +2,7 @@
   "compilerOptions": {
     "target": "ES2023",
     "module": "Node20",
-    "outDir": "build",
+    "noEmit": true,
     "strict": true,
 
     "erasableSyntaxOnly": true,

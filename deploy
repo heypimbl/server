@@ -1,12 +1,15 @@
 #!/bin/bash -x
 
-rm -rf build
+rm -rf dist
 npm run build
 
-cp -R node_modules build/
-cp package.json build/
+# Copy only Playwright dependencies (needed at runtime)
+mkdir -p dist/node_modules
+cp -R node_modules/playwright dist/node_modules/
+cp -R node_modules/playwright-core dist/node_modules/
 
-cat > build/serve <<\EOF
+# Create serve script
+cat > dist/serve <<\EOF
 #!/bin/bash
 . "$CREDENTIALS_DIRECTORY/secrets"
 export PIMBL_2CAPTCHA_API_KEY
@@ -14,8 +17,9 @@ export PIMBL_2CAPTCHA_API_KEY
 cd "$(dirname "$0")"
 exec node index.js
 EOF
-chmod +x build/serve
+chmod +x dist/serve
 
-rsync -rlp --chmod=Dg+s,ug+rw,o-w,+X --del build/ pimbl.mou.fo:/opt/pimbl/app/
+# Deploy
+rsync -rlp --chmod=Dg+s,ug+rw,o-w,+X --del dist/ pimbl.mou.fo:/opt/pimbl/app/
 
 ssh pimbl.mou.fo sudo systemctl restart pimbl.service
