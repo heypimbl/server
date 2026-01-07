@@ -3,8 +3,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "tsc",
-    "dev": "PIMBL_2CAPTCHA_API_KEY='blah' PIMBL_NO_SUBMIT=1 tsx watch src/index.ts",
+    "build": "vite build",
+    "dev": "PIMBL_2CAPTCHA_API_KEY='blah' PIMBL_NO_SUBMIT=1 vite-node --watch src/index.ts",
     "test": "PIMBL_2CAPTCHA_API_KEY='blah' PIMBL_NO_SUBMIT=1 vitest run"
   },
   "dependencies": {
@@ -17,6 +17,8 @@
     "prettier": "^3.6.2",
     "tsx": "^4.20.6",
     "typescript": "^5.9.3",
+    "vite": "^7.2.6",
+    "vite-node": "^5.2.0",
     "vitest": "^4.0.12"
   }
 }
